@@ -63,3 +63,18 @@ Set the same `VITE_API_URL` in the frontend and allow inbound access to port 500
 ## Docker judge notes
 
 This implementation isolates code execution in containers with restricted networking, read-only root filesystem, memory usage limits, CPU caps, and enforced timeouts. The judge includes a fallback mock mode for environments where Docker is not available during local development.
+
+## Public deployment with Vercel
+
+Deploy the `frontend` directory as a Vercel project. Set this Vercel environment variable to the public backend URL:
+
+`VITE_API_URL=https://your-backend.example.com`
+
+Deploy the backend using the root `Dockerfile` on a container host such as Railway, Render, Fly.io, or an equivalent server platform. Set these backend variables:
+
+- `PORT=5000`
+- `NODE_ENV=production`
+- `JWT_SECRET=<strong-random-secret>`
+- `ALLOWED_ORIGINS=https://your-project.vercel.app`
+
+The backend image includes Python, GCC, and Java so all three judge languages work in production. Vercel should host only the frontend; the Express backend and compiler processes require a persistent container service.
