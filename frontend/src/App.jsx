@@ -443,6 +443,12 @@ function App() {
         return;
       }
 
+      if (data.result?.message && !data.result?.details?.length) {
+        setRunOutput(`${data.result.status || 'Execution failed'}\n\n${data.result.message}`);
+        setResult(data.result.status || 'Test run failed');
+        return;
+      }
+
       const detail = data.result?.details?.[0];
       if (data.result?.status === 'ACCEPTED' && detail) {
         setRunOutput(`Input:\n${selectedProblem.sampleInput}\n\nOutput:\n${detail.actual}\n\nExpected:\n${selectedProblem.sampleOutput}\n\nSample test passed`);
