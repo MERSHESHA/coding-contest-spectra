@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
-const API_BASE = (import.meta.env.VITE_API_URL || window.location.origin || 'http://localhost:5000').replace(/\/$/, '');
+const configuredApiUrl = String(import.meta.env.VITE_API_URL || '').trim();
+const browserHost = window.location.hostname || 'localhost';
+const API_BASE = (configuredApiUrl
+  ? configuredApiUrl.replace('localhost', browserHost)
+  : window.location.origin
+).replace(/\/$/, '');
 const DEFAULT_CONTEST_CODE = 'SPECTRA';
 const starterCode = {
   Python: 'def solve():\n    n = int(input())\n    print(n * n)\n\nsolve()\n',
