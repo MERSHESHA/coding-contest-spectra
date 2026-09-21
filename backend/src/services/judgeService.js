@@ -75,6 +75,14 @@ function getPythonRuntimeCandidates() {
   ];
 }
 
+function getCCompilerCandidates() {
+  return [
+    { command: 'gcc', args: [] },
+    { command: 'clang', args: [] },
+    { command: 'cc', args: [] },
+  ];
+}
+
 function formatRuntimeError(error, fallback = 'RUNTIME ERROR') {
   const details = `${error?.stdout || ''}${error?.stderr || ''}${error?.message || ''}`;
   const text = details.toLowerCase();
@@ -154,10 +162,38 @@ function runLocalLanguageExecution({ language, code, testCases, problem }) {
 
     if (language === 'C') {
       const sourceFile = path.join(tempDir, 'main.c');
-      const outputFile = path.join(tempDir, 'main');
+      const outputFile = path.join(tempDir, process.platform === 'win32' ? 'main.exe' : 'main');
       fs.writeFileSync(sourceFile, code);
       try {
-        execFileSync('gcc', ['main.c', '-O2', '-o', 'main'], { cwd: tempDir, timeout: executionTimeout });
+        let compiled = false;
+        let lastCompilerError = null;
+        for (const compiler of getCCompilerCandidates()) {
+          try {
+            execFileSync(compiler.command, [...compiler.args, 'main.c', '-O2', '-o', outputFile], {
+              cwd: tempDir,
+              timeout: executionTimeout,
+              windowsHide: true,
+            });
+            compiled = true;
+            break;
+          } catch (error) {
+            lastCompilerError = error;
+            if (error?.code !== 'ENOENT') break;
+          }
+        }
+
+        if (!compiled) {
+          if (lastCompilerError?.code === 'ENOENT') {
+            return {
+              status: 'COMPILATION ERROR',
+              passed: 0,
+              total: testCases.length,
+              message: 'C compiler not found. Install GCC/MinGW or LLVM Clang, then restart the backend.',
+            };
+          }
+          throw lastCompilerError;
+        }
+
         testCases.forEach((testCase) => {
           try {
             const actualOutput = execFileSync(outputFile, { input: String(testCase.input), encoding: 'utf8', timeout: executionTimeout });
