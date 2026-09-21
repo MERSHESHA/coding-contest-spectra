@@ -279,7 +279,7 @@ export function joinContest({ participantId, name, department, year, contestCode
 
   const participantExists = participants.find((p) => p.participantId === participantId && p.contestId === contest.id);
   if (participantExists) {
-    return { error: 'Participant already joined this contest' };
+    return participantExists;
   }
 
   const participant = {
